@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 using CheapLoc;
@@ -49,6 +49,10 @@ public class SettingsTabExperimental : SettingsTab
             }),
 
         new GapSettingsEntry(5, true),
+
+        new ProxySettingsEntry(),
+
+        new GapSettingsEntry(5),
 
         new DevPluginsSettingsEntry(),
 

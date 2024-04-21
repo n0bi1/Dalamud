@@ -1,4 +1,4 @@
-﻿using Dalamud.Storage.Assets;
+using Dalamud.Storage.Assets;
 
 namespace Dalamud;
 
@@ -114,6 +114,10 @@ public enum DalamudAsset
     [DalamudAssetPath("UIRes", "tsmShade.png")]
     TitleScreenMenuShade = 1013,
 
+    [DalamudAsset(DalamudAssetPurpose.TextureFromPng)]
+    [DalamudAssetPath("UIRes", "missingFont.png")]
+    MissingFontTips = 1014,
+
     /// <summary>
     /// <see cref="DalamudAssetPurpose.Font"/>: Noto Sans CJK JP Medium.
     /// </summary>
@@ -149,5 +153,6 @@ public enum DalamudAsset
     /// </summary>
     [DalamudAsset(DalamudAssetPurpose.Font, required: false)]
     // [DalamudAssetOnlineSource("https://img.finalfantasyxiv.com/lds/pc/global/fonts/FFXIV_Lodestone_SSF.ttf")]
+    [DalamudAssetPath("UIRes", "LodestoneGameSymbol.ttf")]
     LodestoneGameSymbol = 2004,
 }

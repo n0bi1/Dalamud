@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
@@ -58,6 +59,12 @@ MalRD
 SheepGoMeh
 philpax
 
+
+KR maintained by:
+
+chunghyang
+KangDohwa
+RootLee
 
 
 Localization by:

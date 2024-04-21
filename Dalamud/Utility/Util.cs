@@ -5,13 +5,16 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
+using Dalamud.Configuration;
 using Dalamud.Configuration.Internal;
 using Dalamud.Data;
 using Dalamud.Game;
@@ -22,10 +25,12 @@ using Dalamud.Interface.Utility;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using Serilog;
+using Newtonsoft.Json;
 
 using TerraFX.Interop.Windows;
 
 using Windows.Win32.Storage.FileSystem;
+using Dalamud.Networking.Http;
 
 namespace Dalamud.Utility;
 
@@ -34,6 +39,7 @@ namespace Dalamud.Utility;
 /// </summary>
 public static class Util
 {
+    internal static string TOSRemoteUrl = "https://xlweb.xivpf.xyz/Dalamud/ToS";
     private static readonly Type GenericSpanType = typeof(Span<>);
     private static string? gitHashInternal;
     private static int? gitCommitCountInternal;
@@ -491,6 +497,23 @@ public static class Util
     /// </summary>
     /// <returns>If Windows 11 has been detected.</returns>
     public static bool IsWindows11() => Environment.OSVersion.Version.Build >= 22000;
+
+    /// <summary>
+    /// Set the proxy.
+    /// </summary>
+    /// <param name="useManualProxy">System proxy/Manual proxy.</param>
+    /// <param name="proxyProtocol">The protocol of proxy.</param>
+    /// <param name="proxyHost">The proxy host.</param>
+    /// <param name="proxyPort">The proxy port.</param>
+    public static void SetProxy(bool useManualProxy, string proxyProtocol, string proxyHost, int proxyPort)
+    {
+        if (useManualProxy)
+        {
+            var proxy = new WebProxy($"{proxyProtocol}://{proxyHost}:{proxyPort}", true);
+            WebRequest.DefaultWebProxy = proxy;
+            HttpClient.DefaultProxy = proxy;
+        }
+    }
 
     /// <summary>
     /// Open a link in the default browser.
@@ -1030,5 +1053,21 @@ public static class Util
         }
 
         ImGui.PopStyleVar();
+    }
+    internal static async Task<string> GetRemoteTOSHash()
+    {
+        var httpClient = Service<HappyHttpClient>.Get().SharedHttpClient;
+        var response = await httpClient.GetStringAsync($"{TOSRemoteUrl}?tosHash=true");
+        var tosResponse = JsonConvert.DeserializeObject<TosResponse>(response);
+        return tosResponse.tosHash;
+    }
+
+    private class TosResponse
+    {
+        [JsonProperty("message")]
+        public string? message { get; set; }
+
+        [JsonProperty("tosHash")]
+        public string? tosHash { get; set; }
     }
 }
