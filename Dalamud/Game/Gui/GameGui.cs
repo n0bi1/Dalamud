@@ -484,8 +484,13 @@ internal sealed unsafe class GameGui : IInternalDisposableService, IGameGui
     {
         var result = this.toggleUiHideHook.Original(thisPtr, unknownByte);
 
-        this.GameUiHidden = !RaptureAtkModule.Instance()->IsUiVisible;
+        //this.GameUiHidden = !RaptureAtkModule.Instance()->IsUiVisible;
         this.UiHideToggled?.InvokeSafely(this, this.GameUiHidden);
+
+        if (this.GameUiHidden == false)
+            this.GameUiHidden = !this.GameUiHidden;
+        else if (this.GameUiHidden == true)
+            this.GameUiHidden = !this.GameUiHidden;
 
         Log.Debug("UiHide toggled: {0}", this.GameUiHidden);
 
