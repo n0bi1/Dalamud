@@ -71,6 +71,7 @@ internal class DalamudInterface : IInternalDisposableService
     private readonly ProfilerWindow profilerWindow;
     private readonly BranchSwitcherWindow branchSwitcherWindow;
     private readonly HitchSettingsWindow hitchSettingsWindow;
+    private readonly ToSWindow tosWindow;
 
     private bool isCreditsDarkening = false;
     private OutCubic creditsDarkeningAnimation = new(TimeSpan.FromSeconds(10));
@@ -134,6 +135,7 @@ internal class DalamudInterface : IInternalDisposableService
         this.profilerWindow = new ProfilerWindow() { IsOpen = false };
         this.branchSwitcherWindow = new BranchSwitcherWindow() { IsOpen = false };
         this.hitchSettingsWindow = new HitchSettingsWindow() { IsOpen = false };
+        this.tosWindow = new ToSWindow() { IsOpen = false };
 
         this.WindowSystem.AddWindow(this.changelogWindow);
         this.WindowSystem.AddWindow(this.colorDemoWindow);
@@ -150,6 +152,7 @@ internal class DalamudInterface : IInternalDisposableService
         this.WindowSystem.AddWindow(this.profilerWindow);
         this.WindowSystem.AddWindow(this.branchSwitcherWindow);
         this.WindowSystem.AddWindow(this.hitchSettingsWindow);
+        this.WindowSystem.AddWindow(this.tosWindow);
 
         ImGuiManagedAsserts.AssertsEnabled = configuration.AssertsEnabledAtStartup;
         this.isImGuiDrawDevMenu = this.isImGuiDrawDevMenu || configuration.DevBarOpenAtStartup;
@@ -220,6 +223,7 @@ internal class DalamudInterface : IInternalDisposableService
         this.consoleWindow.Dispose();
         this.pluginWindow.Dispose();
         this.titleScreenMenuWindow.Dispose();
+        this.tosWindow.Dispose();
     }
 
     #region Open
@@ -352,6 +356,11 @@ internal class DalamudInterface : IInternalDisposableService
         this.branchSwitcherWindow.IsOpen = true;
         this.branchSwitcherWindow.BringToFront();
     }
+
+    /// <summary>
+    /// Opens the <see cref="ToSWindow"/>.
+    /// </summary>
+    public void OpenToSWindow() => this.tosWindow.IsOpen = true;
 
     #endregion
 
@@ -709,6 +718,11 @@ internal class DalamudInterface : IInternalDisposableService
                     if (ImGui.MenuItem("Open Hitch Settings"))
                     {
                         this.OpenHitchSettings();
+                    }
+
+                    if (ImGui.MenuItem("Open TOS window"))
+                    {
+                        this.OpenToSWindow();
                     }
 
                     ImGui.Separator();

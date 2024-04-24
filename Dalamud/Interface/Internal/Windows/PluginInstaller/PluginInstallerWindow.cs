@@ -64,6 +64,7 @@ internal class PluginInstallerWindow : Window, IDisposable
     private DalamudChangelogManager? dalamudChangelogManager;
     private Task? dalamudChangelogRefreshTask;
     private CancellationTokenSource? dalamudChangelogRefreshTaskCts;
+    private DateTime lastRefreshTime = DateTime.MinValue;
 
     #region Image Tester State
 
@@ -101,7 +102,7 @@ internal class PluginInstallerWindow : Window, IDisposable
     private bool feedbackModalOnNextFrameDontClear = false;
     private string feedbackModalBody = string.Empty;
     private string feedbackModalContact = string.Empty;
-    private bool feedbackModalIncludeException = false;
+    private bool feedbackModalIncludeException = true;
     private IPluginManifest? feedbackPlugin = null;
     private bool feedbackIsTesting = false;
 
@@ -580,6 +581,7 @@ internal class PluginInstallerWindow : Window, IDisposable
         var headerText = Locs.Header_Hint;
         var headerTextSize = ImGui.CalcTextSize(headerText);
         ImGui.Text(headerText);
+        ImGui.TextColored(ImGuiColors.DalamudRed, "If there is a problem using the plugin, please use the built-in feedback or GitHub Issue first.");
 
         ImGui.SameLine();
 
@@ -676,6 +678,25 @@ internal class PluginInstallerWindow : Window, IDisposable
             if (ImGui.Button(Locs.FooterButton_ScanDevPlugins))
             {
                 pluginManager.ScanDevPlugins();
+            }
+        }
+
+        //refresh cache
+        {
+            ImGui.SameLine();
+            var cooldownFinished = this.lastRefreshTime.AddMinutes(1D).CompareTo(DateTime.Now) < 0;
+
+            if (ImGuiComponents.IconButton(FontAwesomeIcon.CloudDownloadAlt))
+            {
+                if (cooldownFinished)
+                {
+                    _ = pluginManager.ReloadPluginMastersAsync(true, true);
+                    this.lastRefreshTime = DateTime.Now;
+                }
+            }
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(cooldownFinished ? "Update plugin list cache" : "Girls in the middle of life...");
             }
         }
 
@@ -972,7 +993,10 @@ internal class PluginInstallerWindow : Window, IDisposable
 
             ImGui.Spacing();
 
+            ImGui.BeginDisabled();
             ImGui.Checkbox(Locs.FeedbackModal_IncludeLastError, ref this.feedbackModalIncludeException);
+            ImGui.EndDisabled();
+
             ImGui.TextColored(ImGuiColors.DalamudGrey, Locs.FeedbackModal_IncludeLastErrorHint);
 
             ImGui.Spacing();
@@ -1049,7 +1073,7 @@ internal class PluginInstallerWindow : Window, IDisposable
             {
                 this.feedbackModalBody = string.Empty;
                 this.feedbackModalContact = Service<DalamudConfiguration>.Get().LastFeedbackContactDetails;
-                this.feedbackModalIncludeException = false;
+                this.feedbackModalIncludeException = true;
             }
             else
             {
@@ -2194,7 +2218,9 @@ internal class PluginInstallerWindow : Window, IDisposable
                 ImGui.SameLine();
                 this.DrawSendFeedbackButton(manifest, false, true);
             }
-            
+
+            this.DrawVisitRepoUrlButton(manifest.RepoUrl, true);
+
             ImGuiHelpers.ScaledDummy(5);
 
             if (this.DrawPluginImages(null, manifest, isThirdParty, index))

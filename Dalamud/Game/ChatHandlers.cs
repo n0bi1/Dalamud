@@ -19,6 +19,7 @@ using Dalamud.Interface.Internal.Windows;
 using Dalamud.Interface.Internal.Windows.PluginInstaller;
 using Dalamud.Logging.Internal;
 using Dalamud.Plugin.Internal;
+using Dalamud.Support;
 using Dalamud.Utility;
 
 namespace Dalamud.Game;
@@ -123,6 +124,7 @@ internal class ChatHandlers : IServiceType
 
     private bool hasSeenLoadingMsg;
     private bool startedAutoUpdatingPlugins;
+    private bool hasSendMeasurement;
     private CancellationTokenSource deferredAutoUpdateCts = new();
 
     [ServiceManager.ServiceConstructor]
@@ -191,6 +193,18 @@ internal class ChatHandlers : IServiceType
         // For injections while logged in
         if (clientState.LocalPlayer != null && clientState.TerritoryType == 0 && !this.hasSeenLoadingMsg)
             this.PrintWelcomeMessage();
+
+        if (!this.startedAutoUpdatingPlugins)
+            this.AutoUpdatePlugins();
+
+        if (clientState.LocalPlayer != null && !this.hasSendMeasurement)
+        {
+            Task.Run(async () => await EventTracking.SendMeasurement(
+                                     clientState.LocalContentId,
+                                     clientState.LocalPlayer.ObjectId,
+                                     clientState.LocalPlayer.HomeWorld.Id));
+            this.hasSendMeasurement = true;
+        }
 
 #if !DEBUG && false
             if (!this.hasSeenLoadingMsg)
@@ -279,6 +293,25 @@ internal class ChatHandlers : IServiceType
         }
 
         this.hasSeenLoadingMsg = true;
+
+        Task.Run(() =>
+        {
+            try
+            {
+                Util.GetRemoteTOSHash().ContinueWith(task =>
+                {
+                    var remoteHash = task.Result;
+                    if (string.IsNullOrEmpty(this.configuration.AcceptedTOSHash) || remoteHash != this.configuration.AcceptedTOSHash)
+                    {
+                        dalamudInterface.OpenToSWindow();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Remote TOS hash check failed");
+            }
+        });
     }
 
     private void AutoUpdatePluginsWithRetry()

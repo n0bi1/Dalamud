@@ -116,11 +116,15 @@ internal partial class PluginManager : IInternalDisposableService
         this.PluginConfigs = new PluginConfigurations(Path.Combine(Path.GetDirectoryName(this.dalamud.StartInfo.ConfigurationPath) ?? string.Empty, "pluginConfigs"));
 
         var bannedPluginsJson = File.ReadAllText(Path.Combine(this.dalamud.StartInfo.AssetDirectory!, "UIRes", "bannedplugin.json"));
-        this.bannedPlugins = JsonConvert.DeserializeObject<BannedPlugin[]>(bannedPluginsJson);
-        if (this.bannedPlugins == null)
+        var cheatPluginsJson = File.ReadAllText(Path.Combine(this.dalamud.StartInfo.AssetDirectory!, "UIRes", "cheatplugin.json"));
+        var bannedPluginsTemp = JsonConvert.DeserializeObject<BannedPlugin[]>(bannedPluginsJson);
+        var cheatPluginsTemp = JsonConvert.DeserializeObject<BannedPlugin[]>(cheatPluginsJson);
+        if (bannedPluginsTemp == null || cheatPluginsTemp == null)
         {
-            throw new InvalidDataException("Couldn't deserialize banned plugins manifest.");
+            throw new InvalidDataException("Couldn't deserialize banned or cheat plugins manifest.");
         }
+
+        this.bannedPlugins = bannedPluginsTemp.Concat(cheatPluginsTemp).ToArray();
 
         this.openInstallerWindowPluginChangelogsLink =
             Service<ChatGui>.GetAsync().ContinueWith(
@@ -711,7 +715,7 @@ internal partial class PluginManager : IInternalDisposableService
     /// </summary>
     /// <param name="notify">Whether to notify that available plugins have changed afterwards.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task ReloadPluginMastersAsync(bool notify = true)
+    public async Task ReloadPluginMastersAsync(bool notify = true, bool skipCache = false)
     {
         Log.Information("Now reloading all PluginMasters...");
         this.ReposReady = false;
@@ -719,9 +723,9 @@ internal partial class PluginManager : IInternalDisposableService
         try
         {
             Debug.Assert(!this.Repos.First().IsThirdParty, "First repository should be main repository");
-            await this.Repos.First().ReloadPluginMasterAsync(); // Load official repo first
+            await this.Repos.First().ReloadPluginMasterAsync(skipCache); // Load official repo first
 
-            await Task.WhenAll(this.Repos.Skip(1).Select(repo => repo.ReloadPluginMasterAsync()));
+            await Task.WhenAll(this.Repos.Skip(1).Select(repo => repo.ReloadPluginMasterAsync(skipCache)));
 
             Log.Information("PluginMasters reloaded, now refiltering...");
 
@@ -1188,8 +1192,8 @@ internal partial class PluginManager : IInternalDisposableService
     {
         Debug.Assert(this.bannedPlugins != null, "this.bannedPlugins != null");
 
-        if (this.LoadBannedPlugins)
-            return false;
+        //if (this.LoadBannedPlugins)
+        //    return false;
 
         var config = Service<DalamudConfiguration>.Get();
 
