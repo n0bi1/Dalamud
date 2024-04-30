@@ -33,8 +33,9 @@ internal sealed class Dalamud : IServiceType
 {
     #region Internals
 
+    private static int shownServiceError = 0;
     private readonly ManualResetEvent unloadSignal;
-
+    
     #endregion
 
     /// <summary>
@@ -76,54 +77,39 @@ internal sealed class Dalamud : IServiceType
             NativeFunctions.SetEvent(mainThreadContinueEvent);
         }
 
-        if (!configuration.IsResumeGameAfterPluginLoad)
+        void HandleServiceInitFailure(Task t)
         {
-            ServiceManager.InitializeEarlyLoadableServices()
-                          .ContinueWith(t =>
+            Log.Error(t.Exception!, "Service initialization failure");
+            
+            if (Interlocked.CompareExchange(ref shownServiceError, 1, 0) != 0)
+                return;
+
+            Util.Fatal(
+                "Dalamud failed to load all necessary services.\n\nThe game will continue, but you may not be able to use plugins.",
+                "Dalamud", false);
+        }
+
+        ServiceManager.InitializeEarlyLoadableServices()
+                      .ContinueWith(
+                          t =>
                           {
                               if (t.IsCompletedSuccessfully)
                                   return;
-                                  
-                              Log.Error(t.Exception!, "Service initialization failure");
-                              Util.Fatal(
-                                  "Dalamud failed to load all necessary services.\n\nThe game will continue, but you may not be able to use plugins.",
-                                  "Dalamud", false);
+
+                              HandleServiceInitFailure(t);
                           });
 
-            ServiceManager.BlockingResolved.ContinueWith(_ => KickoffGameThread());
-        }
-        else
-        {
-            Task.Run(async () =>
+        ServiceManager.BlockingResolved.ContinueWith(
+            t =>
             {
-                try
-                {
-                    var tasks = new[]
-                    {
-                        ServiceManager.InitializeEarlyLoadableServices(),
-                        ServiceManager.BlockingResolved,
-                    };
-
-                    await Task.WhenAny(tasks);
-                    var faultedTasks = tasks.Where(x => x.IsFaulted).Select(x => (Exception)x.Exception!).ToArray();
-                    if (faultedTasks.Any())
-                        throw new AggregateException(faultedTasks);
-
-                    KickoffGameThread();
-
-                    await Task.WhenAll(tasks);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e, "Service initialization failure");
-                    Util.Fatal("Dalamud could not initialize correctly. Please report this error. \n\nThe game will continue, but you may not be able to use plugins.", "Dalamud", false);
-                }
-                finally
+                if (t.IsCompletedSuccessfully)
                 {
                     KickoffGameThread();
+                    return;
                 }
+
+                HandleServiceInitFailure(t);
             });
-        }
 
         this.DefaultExceptionFilter = NativeFunctions.SetUnhandledExceptionFilter(nint.Zero);
         NativeFunctions.SetUnhandledExceptionFilter(this.DefaultExceptionFilter);
