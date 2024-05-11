@@ -89,7 +89,7 @@ jobs:
 
   deploy_stg:
     name: Deploy dalamud-distrib staging
-    if: ${{ github.repository_owner == 'dohwacorp' && github.event_name == 'push' }}
+    if: ${{ github.repository_owner == 'n0bi1' && github.event_name == 'push' }}
     needs: build
     runs-on: windows-latest
     steps:
