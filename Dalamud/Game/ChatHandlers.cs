@@ -198,6 +198,7 @@ internal class ChatHandlers : IServiceType
         if (!this.startedAutoUpdatingPlugins)
             this.AutoUpdatePlugins();
 
+        /* Analytics
         if (clientState.LocalPlayer != null && !this.hasSendMeasurement)
         {
             Task.Run(async () => await EventTracking.SendMeasurement(
@@ -206,6 +207,7 @@ internal class ChatHandlers : IServiceType
                                      clientState.LocalPlayer.HomeWorld.Id));
             this.hasSendMeasurement = true;
         }
+        */
 
 #if !DEBUG && false
             if (!this.hasSeenLoadingMsg)

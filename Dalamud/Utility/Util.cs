@@ -39,7 +39,7 @@ namespace Dalamud.Utility;
 /// </summary>
 public static class Util
 {
-    internal static string TOSRemoteUrl = "https://xlweb.xivpf.xyz/Dalamud/ToS";
+    internal static string TOSRemoteUrl = "https://kamori.goats.dev/Dalamud/ToS";
     private static readonly Type GenericSpanType = typeof(Span<>);
     private static string? gitHashInternal;
     private static int? gitCommitCountInternal;

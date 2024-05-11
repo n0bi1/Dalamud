@@ -27,7 +27,7 @@ internal class PluginRepository
     /// <summary>
     /// The URL of the official main repository.
     /// </summary>
-    public const string MainRepoUrl = "https://xlweb.xivpf.xyz/Plugin/PluginMaster";
+    public const string MainRepoUrl = "https://kamori.goats.dev/Plugin/PluginMaster";
 
     private const int HttpRequestTimeoutSeconds = 20;
 
